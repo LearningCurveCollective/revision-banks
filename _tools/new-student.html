@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>New Student — Revision Banks</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../_engine/bank.css">
+<style>
+.wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
+.crumb { font-size: 13px; margin-bottom: 18px; } .crumb a { color: var(--green-dark); }
+.step { background: white; border-radius: 14px; border: 1.5px solid var(--cream-dark); border-left: 5px solid var(--green-light); padding: 20px 22px; margin-bottom: 18px; }
+.step h2 { font-family: 'Switzer','Space Grotesk',sans-serif; font-size: 18px; color: var(--green-dark); margin-bottom: 10px; }
+.step p { font-size: 14px; color: var(--text-medium); line-height: 1.55; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+input[type=text] { padding: 10px 13px; border: 1.5px solid var(--cream-dark); border-radius: 10px; font: inherit; font-size: 14px; flex: 1 1 200px; }
+.slugbox { font-family: ui-monospace, Menlo, monospace; font-size: 20px; color: var(--green-dark); background: var(--cream); padding: 10px 16px; border-radius: 10px; }
+pre { background: #1f2a22; color: #e8efe9; padding: 14px 16px; border-radius: 10px; font-size: 12.5px; line-height: 1.5; overflow-x: auto; margin-top: 10px; max-height: 320px; }
+.fname { font-family: ui-monospace, Menlo, monospace; font-size: 13px; background: var(--gold-pale); color: var(--brown-dark); padding: 3px 8px; border-radius: 6px; }
+.btn-sm { font-size: 13px !important; }
+ol { padding-left: 20px; font-size: 14px; color: var(--text-medium); line-height: 1.7; }
+ol code { background: var(--cream); padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo"><img src="../_engine/logo.png" alt=""></div>
+    <div class="header-text"><h1>New Student</h1><div class="subtitle">REVISION BANKS &bull; TUTOR TOOL</div></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="crumb"><a href="../">&larr; Back to roster</a></div>
+
+  <div class="step">
+    <h2>1. Name the student</h2>
+    <p>First name only goes in the URL, plus a 4-character tag so two students with the same name never collide. The tag is random and permanent &mdash; once you've sent a link, never rename the folder.</p>
+    <div class="row">
+      <input type="text" id="first" placeholder="First name (e.g. Maya)" autocomplete="off">
+      <input type="text" id="tagline" placeholder="Tagline shown in the header (e.g. SAT PREP • OCTOBER TARGET)" value="SAT PREP">
+    </div>
+    <div class="row">
+      <span class="slugbox" id="slug">—</span>
+      <button class="btn btn-ghost btn-sm" id="reroll">&#8635; New tag</button>
+      <span style="font-size:13px;color:var(--text-medium);">Student link: <span id="link" style="font-family:ui-monospace,Menlo,monospace;"></span></span>
+    </div>
+  </div>
+
+  <div class="step">
+    <h2>2. Download the two files</h2>
+    <p>These are the only files a student folder needs. <span class="fname">index.html</span> is the page; <span class="fname">seed.js</span> starts empty and is where you'll add misses over time.</p>
+    <div class="row">
+      <button class="btn btn-green btn-sm" id="dl-index">&#11015; index.html</button>
+      <button class="btn btn-gold btn-sm" id="dl-seed">&#11015; seed.js</button>
+      <button class="btn btn-ghost btn-sm" id="copy-index">Copy index.html</button>
+      <button class="btn btn-ghost btn-sm" id="copy-seed">Copy seed.js</button>
+    </div>
+    <pre id="preview"></pre>
+  </div>
+
+  <div class="step">
+    <h2>3. Put them on GitHub</h2>
+    <ol>
+      <li>Open the repo: <a id="repo-link" href="#" target="_blank" rel="noopener">github.com/…/revision-banks</a></li>
+      <li>Click <strong>Add file &rarr; Upload files</strong>.</li>
+      <li>Drag <strong>both</strong> downloaded files in, but <em>before</em> committing, look at the file list: GitHub will put them at the repo root. Instead, click <strong>Add file &rarr; Create new file</strong>, type <code id="p1">slug/index.html</code> in the name box (the slash creates the folder), paste the copied contents, commit. Repeat for <code id="p2">slug/seed.js</code>.</li>
+      <li>Wait ~1 minute, then open the student link above. Done &mdash; send them that link.</li>
+    </ol>
+    <p style="margin-top:10px;">Tip: the "Create new file + paste" route is the reliable one on GitHub's website, because the upload page can't create a folder. If you use GitHub Desktop or the command line, just drop the folder in and push.</p>
+  </div>
+</div>
+
+<script>
+var OWNER = 'learningcurvecollective', REPO = 'revision-banks';
+var PAGES = 'https://'+OWNER+'.github.io/'+REPO+'/';
+document.getElementById('repo-link').href = 'https://github.com/'+OWNER+'/'+REPO;
+document.getElementById('repo-link').textContent = 'github.com/'+OWNER+'/'+REPO;
+
+function tag(){ var a='abcdefghijkmnpqrstuvwxyz23456789', t=''; var r=new Uint32Array(4); crypto.getRandomValues(r); for(var i=0;i<4;i++) t+=a[r[i]%a.length]; return t; }
+var curTag = tag();
+function cleanName(s){ return (s||'').trim().replace(/\s+/g,' '); }
+function slugOf(){ var f = cleanName(document.getElementById('first').value).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,''); return f ? f+'-'+curTag : ''; }
+function today(){ return new Date().toISOString().slice(0,10); }
+function indexHTML(){
+    var name = cleanName(document.getElementById('first').value), slug = slugOf(), tl = document.getElementById('tagline').value.trim();
+    return [
+'<!DOCTYPE html>','<html lang="en">','<head>','<meta charset="UTF-8">','<meta name="viewport" content="width=device-width, initial-scale=1.0">','<meta name="robots" content="noindex">',
+'<title>'+name+' — Revision Bank</title>',
+'<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">',
+'<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">',
+'<script>window.MathJax = { tex: { inlineMath: [["$","$"]], displayMath: [["$$","$$"]] }, svg: { fontCache: \'global\' } };<\/script>',
+'<script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"><\/script>',
+'<link rel="stylesheet" href="../_engine/bank.css">','</head>','<body>','<div id="rbank-app"></div>','',
+'<!-- Student settings — the only lines that differ between students -->',
+'<script>','window.RBANK = {','    name: "'+name.replace(/"/g,'')+'",','    slug: "'+slug+'",','    tagline: "'+tl.replace(/"/g,'')+'",','    created: "'+today()+'"','};','<\/script>',
+'<script src="seed.js"><\/script>','<script src="../_engine/bank.js"><\/script>','</body>','</html>',''].join('\n');
+}
+function seedJS(){
+    var name = cleanName(document.getElementById('first').value);
+    return '/* '+name+' — revision bank seed.\n   Add new entries at the TOP of this array (use _tools/new-entry.html to generate one).\n   Never reuse or edit an id once it has shipped — add a new entry instead. */\nwindow.RBANK_SEED = [\n\n];\n';
+}
+function refresh(){
+    var slug = slugOf();
+    document.getElementById('slug').textContent = slug || '—';
+    document.getElementById('link').textContent = slug ? PAGES+slug+'/' : '';
+    document.getElementById('p1').textContent = (slug||'slug')+'/index.html';
+    document.getElementById('p2').textContent = (slug||'slug')+'/seed.js';
+    document.getElementById('preview').textContent = slug ? ('── index.html ──\n'+indexHTML()+'\n── seed.js ──\n'+seedJS()) : 'Type a first name to generate the files.';
+}
+function dl(name, text){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+function copy(text, btn){ navigator.clipboard.writeText(text).then(function(){ var t=btn.textContent; btn.textContent='Copied!'; setTimeout(function(){ btn.textContent=t; },1400); }); }
+document.getElementById('first').addEventListener('input', refresh);
+document.getElementById('tagline').addEventListener('input', refresh);
+document.getElementById('reroll').addEventListener('click', function(){ curTag = tag(); refresh(); });
+document.getElementById('dl-index').addEventListener('click', function(){ if(slugOf()) dl('index.html', indexHTML()); });
+document.getElementById('dl-seed').addEventListener('click', function(){ if(slugOf()) dl('seed.js', seedJS()); });
+document.getElementById('copy-index').addEventListener('click', function(){ if(slugOf()) copy(indexHTML(), this); });
+document.getElementById('copy-seed').addEventListener('click', function(){ if(slugOf()) copy(seedJS(), this); });
+refresh();
+</script>
+</body>
+</html>

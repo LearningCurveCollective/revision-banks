@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Revision Banks — Learning Curve Collective</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_engine/bank.css">
+<style>
+.hub-hero { background: var(--green-dark); color: white; padding: 44px 40px 36px; }
+.hub-hero-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+.hub-hero img { width: 72px; height: 72px; object-fit: contain; }
+.hub-hero h1 { font-family: 'Switzer','Space Grotesk',sans-serif; font-size: 30px; letter-spacing: -0.3px; }
+.hub-hero p { color: var(--gold-light); font-size: 14px; margin-top: 4px; }
+.hub-hero .tools { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.hub-hero .tools a { color: var(--green-dark); background: var(--gold-light); text-decoration: none; font-weight: 600; font-size: 13px; padding: 9px 14px; border-radius: 8px; }
+.hub-hero .tools a:hover { background: var(--gold); }
+.hub { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+.hub-top { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.hub-top input { flex: 1 1 260px; padding: 11px 14px; border: 1.5px solid var(--cream-dark); border-radius: 10px; font: inherit; font-size: 14px; background: white; }
+.hub-top .status { font-size: 13px; color: var(--text-medium); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+.scard { background: white; border-radius: 14px; border: 1.5px solid var(--cream-dark); border-top: 5px solid var(--green-light); padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 10px; transition: transform .15s, box-shadow .15s; }
+.scard:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(33,68,43,.12); }
+.scard h3 { font-family: 'Switzer','Space Grotesk',sans-serif; font-size: 20px; color: var(--green-dark); }
+.scard .slug { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--text-medium); background: var(--cream); padding: 3px 8px; border-radius: 6px; display: inline-block; }
+.scard .meta { font-size: 13px; color: var(--text-medium); display: flex; gap: 14px; flex-wrap: wrap; }
+.scard .meta b { color: var(--green-dark); }
+.scard .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 6px; }
+.scard .actions a, .scard .actions button { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; text-decoration: none; cursor: pointer; border: 1.5px solid transparent; }
+.a-open { background: var(--green-dark); color: white; }
+.a-open:hover { background: var(--green-light); }
+.a-edit { background: white; color: var(--green-dark); border-color: var(--green-dark) !important; }
+.a-edit:hover { background: var(--cream); }
+.a-copy { background: var(--gold-pale); color: var(--brown-dark); }
+.a-copy:hover { background: var(--gold-light); }
+.note { background: #FFF8E8; border: 1.5px solid var(--gold-light); border-radius: 12px; padding: 16px 18px; font-size: 14px; color: var(--brown-dark); line-height: 1.55; margin-top: 28px; }
+.note code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+.skeleton { height: 150px; border-radius: 14px; background: linear-gradient(90deg, #e9e9e9 25%, #f4f4f4 50%, #e9e9e9 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
+@keyframes sh { to { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+
+<div class="hub-hero">
+  <div class="hub-hero-inner">
+    <img src="_engine/logo.png" alt="">
+    <div>
+      <h1>Revision Banks</h1>
+      <p>One personal, always-current bank per student. Send each student only their own link.</p>
+    </div>
+    <div class="tools">
+      <a href="_tools/new-student.html">+ New student</a>
+      <a href="_tools/new-entry.html">+ New seed entry</a>
+    </div>
+  </div>
+</div>
+
+<main class="hub">
+  <div class="hub-top">
+    <input type="text" id="q" placeholder="Filter by name or slug…">
+    <span class="status" id="status">Loading roster from GitHub…</span>
+  </div>
+  <div class="grid" id="grid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+
+  <div class="note">
+    <strong>How this works.</strong> Every folder in the repo that doesn't start with <code>_</code> is a student. The roster above is read live from GitHub, so adding a student folder is all it takes.
+    To add misses after a session, open the student's <code>seed.js</code> on GitHub, paste the new entry at the top of the array (use <em>New seed entry</em> to generate it), and commit. The student refreshes and sees it; their own logged misses and mastery are untouched.
+    Rules: never reuse a seed <code>id</code>, and never rename a student folder once the link has been sent.
+  </div>
+</main>
+
+<script>
+var OWNER = 'learningcurvecollective';
+var REPO  = 'revision-banks';
+var API   = 'https://api.github.com/repos/'+OWNER+'/'+REPO;
+var PAGES = 'https://'+OWNER+'.github.io/'+REPO+'/';
+var students = [];
+
+function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(iso){ if(!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+
+async function load(){
+    var grid = document.getElementById('grid'), status = document.getElementById('status');
+    try {
+        var r = await fetch(API+'/contents/', {headers:{'Accept':'application/vnd.github+json'}});
+        if(!r.ok) throw new Error('GitHub API '+r.status);
+        var items = await r.json();
+        var dirs = items.filter(function(i){ return i.type==='dir' && i.name[0]!=='_' && i.name[0]!=='.'; }).map(function(i){ return i.name; });
+        if(dirs.length===0){ grid.innerHTML = '<div class="empty"><h3>No students yet.</h3><p>Use <strong>+ New student</strong> to create the first folder.</p></div>'; status.textContent=''; return; }
+        students = await Promise.all(dirs.map(describe));
+        students.sort(function(a,b){ return (b.updated||'').localeCompare(a.updated||''); });
+        render(); status.textContent = students.length+' student'+(students.length===1?'':'s');
+    } catch(e){
+        status.textContent = '';
+        grid.innerHTML = '<div class="empty"><h3>Couldn&rsquo;t load the roster.</h3><p>'+esc(e.message)+'. If you just created the repo, give GitHub Pages a minute, then refresh. (GitHub&rsquo;s API also rate-limits after ~60 loads an hour.)</p></div>';
+    }
+}
+async function describe(slug){
+    var s = { slug:slug, name: slug.split('-')[0].replace(/^./, function(c){ return c.toUpperCase(); }), seeds:null, updated:null, tagline:'' };
+    try {
+        var h = await (await fetch(PAGES+slug+'/index.html', {cache:'no-store'})).text();
+        var m = h.match(/name:\s*["']([^"']+)["']/); if(m) s.name = m[1];
+        m = h.match(/tagline:\s*["']([^"']+)["']/); if(m) s.tagline = m[1];
+    } catch(e){}
+    try {
+        var js = await (await fetch(PAGES+slug+'/seed.js', {cache:'no-store'})).text();
+        s.seeds = (js.match(/^\s*["']?id["']?\s*:/gm)||[]).length;
+    } catch(e){}
+    try {
+        var c = await (await fetch(API+'/commits?per_page=1&path='+encodeURIComponent(slug+'/seed.js'))).json();
+        if(Array.isArray(c) && c[0]) s.updated = c[0].commit.committer.date;
+    } catch(e){}
+    return s;
+}
+function render(){
+    var q = (document.getElementById('q').value||'').toLowerCase().trim();
+    var grid = document.getElementById('grid');
+    var list = students.filter(function(s){ return !q || s.slug.indexOf(q)!==-1 || s.name.toLowerCase().indexOf(q)!==-1; });
+    if(!list.length){ grid.innerHTML = '<div class="empty"><p>No match.</p></div>'; return; }
+    grid.innerHTML = list.map(function(s){
+        var link = PAGES+s.slug+'/';
+        var edit = 'https://github.com/'+OWNER+'/'+REPO+'/edit/main/'+s.slug+'/seed.js';
+        return '<div class="scard">'
+          + '<h3>'+esc(s.name)+'</h3>'
+          + '<span class="slug">'+esc(s.slug)+'</span>'
+          + (s.tagline?'<div class="meta"><span>'+esc(s.tagline)+'</span></div>':'')
+          + '<div class="meta"><span><b>'+(s.seeds==null?'?':s.seeds)+'</b> seeded</span><span>updated <b>'+fmtDate(s.updated)+'</b></span></div>'
+          + '<div class="actions"><a class="a-open" href="'+link+'" target="_blank" rel="noopener">Open bank</a>'
+          + '<a class="a-edit" href="'+edit+'" target="_blank" rel="noopener">Edit seed.js</a>'
+          + '<button class="a-copy" data-link="'+esc(link)+'">Copy link</button></div>'
+          + '</div>';
+    }).join('');
+}
+document.getElementById('q').addEventListener('input', render);
+document.addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-link]'); if(!b) return;
+    navigator.clipboard.writeText(b.dataset.link).then(function(){ var t=b.textContent; b.textContent='Copied!'; setTimeout(function(){ b.textContent=t; },1400); });
+});
+load();
+</script>
+</body>
+</html>
