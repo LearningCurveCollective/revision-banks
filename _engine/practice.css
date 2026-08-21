@@ -137,7 +137,8 @@ h3.sub{font-family:'Switzer','Space Grotesk',sans-serif;font-size:16px;color:var
 .q-ref .ne-box{display:inline-block;width:80px;height:30px;border:2px solid #333;border-radius:4px;background:#fff}
 .prow .stem{cursor:pointer}
 .prow .stem:hover{color:var(--green-dark);text-decoration:underline dotted}
-.prow .stem::before{content:'▸';display:inline-block;width:14px;color:var(--text-medium);transition:transform .15s}
-.prow .stem.open::before{transform:rotate(90deg)}
+.prow .stem::after{content:'▸ view';margin-left:8px;font-size:11.5px;font-weight:600;color:var(--green-light);opacity:.85}
+.prow .stem.open::after{content:'▾ hide'}
 .pfull{padding:4px 16px 14px 42px;border-top:1px dashed var(--cream-dark);background:#FCFBF8}
 .pfull .q-ref{margin-top:8px}
+.figmark{font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-pale);padding:1px 7px;border-radius:6px;margin-left:6px;vertical-align:middle}
