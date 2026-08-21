@@ -104,10 +104,11 @@ async function describe(slug){
         var h = await (await fetch(PAGES+slug+'/index.html', {cache:'no-store'})).text();
         var m = h.match(/name:\s*["']([^"']+)["']/); if(m) s.name = m[1];
         m = h.match(/tagline:\s*["']([^"']+)["']/); if(m) s.tagline = m[1];
+        s.engine = /_engine\/practice\.js/.test(h) ? 'practice' : 'miss-log';
     } catch(e){}
     try {
         var js = await (await fetch(PAGES+slug+'/seed.js', {cache:'no-store'})).text();
-        s.seeds = (js.match(/^\s*["']?id["']?\s*:/gm)||[]).length;
+        s.seeds = (js.match(/[{,]\s*["']?id["']?\s*:/g)||[]).length;
     } catch(e){}
     try {
         var c = await (await fetch(API+'/commits?per_page=1&path='+encodeURIComponent(slug+'/seed.js'))).json();
@@ -125,7 +126,7 @@ function render(){
         var edit = 'https://github.com/'+OWNER+'/'+REPO+'/edit/main/'+s.slug+'/seed.js';
         return '<div class="scard">'
           + '<h3>'+esc(s.name)+'</h3>'
-          + '<span class="slug">'+esc(s.slug)+'</span>'
+          + '<span class="slug">'+esc(s.slug)+'</span> <span class="slug" style="background:'+(s.engine==='practice'?'var(--blue-pale,#E1EAF4)':'var(--gold-pale)')+'">'+(s.engine==='practice'?'practice engine':'miss log')+'</span>'
           + (s.tagline?'<div class="meta"><span>'+esc(s.tagline)+'</span></div>':'')
           + '<div class="meta"><span><b>'+(s.seeds==null?'?':s.seeds)+'</b> seeded</span><span>updated <b>'+fmtDate(s.updated)+'</b></span></div>'
           + '<div class="actions"><a class="a-open" href="'+link+'" target="_blank" rel="noopener">Open bank</a>'

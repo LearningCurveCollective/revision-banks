@@ -41,6 +41,7 @@ ol code { background: var(--cream); padding: 1px 6px; border-radius: 4px; font-s
     <div class="row">
       <input type="text" id="first" placeholder="First name (e.g. Maya)" autocomplete="off">
       <input type="text" id="tagline" placeholder="Tagline shown in the header (e.g. SAT PREP • OCTOBER TARGET)" value="SAT PREP">
+      <select id="engine" style="padding:10px 13px;border:1.5px solid var(--cream-dark);border-radius:10px;font:inherit;font-size:14px"><option value="bank">Miss log (Shivani style: student logs misses, review mode)</option><option value="practice">Practice engine (Charlotte style: seeded problems, sessions, scheduler)</option></select>
     </div>
     <div class="row">
       <span class="slugbox" id="slug">—</span>
@@ -85,7 +86,7 @@ function cleanName(s){ return (s||'').trim().replace(/\s+/g,' '); }
 function slugOf(){ var f = cleanName(document.getElementById('first').value).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,''); return f ? f+'-'+curTag : ''; }
 function today(){ return new Date().toISOString().slice(0,10); }
 function indexHTML(){
-    var name = cleanName(document.getElementById('first').value), slug = slugOf(), tl = document.getElementById('tagline').value.trim();
+    var name = cleanName(document.getElementById('first').value), slug = slugOf(), tl = document.getElementById('tagline').value.trim(), eng = document.getElementById('engine').value;
     return [
 '<!DOCTYPE html>','<html lang="en">','<head>','<meta charset="UTF-8">','<meta name="viewport" content="width=device-width, initial-scale=1.0">','<meta name="robots" content="noindex">',
 '<title>'+name+' — Revision Bank</title>',
@@ -93,13 +94,14 @@ function indexHTML(){
 '<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">',
 '<script>window.MathJax = { tex: { inlineMath: [["$","$"]], displayMath: [["$$","$$"]] }, svg: { fontCache: \'global\' } };<\/script>',
 '<script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"><\/script>',
-'<link rel="stylesheet" href="../_engine/bank.css">','</head>','<body>','<div id="rbank-app"></div>','',
+'<link rel="stylesheet" href="../_engine/'+(eng==='practice'?'practice':'bank')+'.css">','</head>','<body>','<div id="rbank-app"></div>','',
 '<!-- Student settings — the only lines that differ between students -->',
-'<script>','window.RBANK = {','    name: "'+name.replace(/"/g,'')+'",','    slug: "'+slug+'",','    tagline: "'+tl.replace(/"/g,'')+'",','    created: "'+today()+'"','};','<\/script>',
-'<script src="seed.js"><\/script>','<script src="../_engine/bank.js"><\/script>','</body>','</html>',''].join('\n');
+'<script>','window.RBANK = {','    name: "'+name.replace(/"/g,'')+'",','    slug: "'+slug+'",','    tagline: "'+tl.replace(/"/g,'')+'",'].concat(eng==='practice'?['    exam: "GRE",','    tutor: "Torin",','    requireReattempt: true,     // false = student can log any question, tried or not']:[]).concat(['    created: "'+today()+'"','};','<\/script>',
+'<script src="seed.js"><\/script>','<script src="../_engine/'+(eng==='practice'?'practice':'bank')+'.js"><\/script>','</body>','</html>','']).join('\n');
 }
 function seedJS(){
-    var name = cleanName(document.getElementById('first').value);
+    var name = cleanName(document.getElementById('first').value), eng = document.getElementById('engine').value;
+    if(eng==='practice') return '/* '+name+' — revision bank seed (practice engine).\n   One object per problem. variant 0 = original miss; 1, 2, ... = your variations.\n   Fields: id (unique forever), topic, variant, type (qc | mc | ma | ne), stem, qa/qb (qc), choices (mc/ma),\n           answer (index | array of indices | string), given, source, explain, trap, figure (optional SVG), frac:true (fraction entry).\n   Copy an entry from charlotte-sj2q/seed.js as a template. Add new problems at the END; never reuse an id. */\nwindow.RBANK_SEED = [\n\n];\n';
     return '/* '+name+' — revision bank seed.\n   Add new entries at the TOP of this array (use _tools/new-entry.html to generate one).\n   Never reuse or edit an id once it has shipped — add a new entry instead. */\nwindow.RBANK_SEED = [\n\n];\n';
 }
 function refresh(){
@@ -114,6 +116,7 @@ function dl(name, text){ var a=document.createElement('a'); a.href=URL.createObj
 function copy(text, btn){ navigator.clipboard.writeText(text).then(function(){ var t=btn.textContent; btn.textContent='Copied!'; setTimeout(function(){ btn.textContent=t; },1400); }); }
 document.getElementById('first').addEventListener('input', refresh);
 document.getElementById('tagline').addEventListener('input', refresh);
+document.getElementById('engine').addEventListener('change', refresh);
 document.getElementById('reroll').addEventListener('click', function(){ curTag = tag(); refresh(); });
 document.getElementById('dl-index').addEventListener('click', function(){ if(slugOf()) dl('index.html', indexHTML()); });
 document.getElementById('dl-seed').addEventListener('click', function(){ if(slugOf()) dl('seed.js', seedJS()); });
