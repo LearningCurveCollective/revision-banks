@@ -66,7 +66,7 @@ h3.sub{font-family:'Switzer','Space Grotesk',sans-serif;font-size:16px;color:var
 .prow .stem{color:var(--text-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prow .meta{color:var(--text-medium);font-size:12px;white-space:nowrap}
 .badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.3px}
-.badge.qc{background:var(--blue-pale);color:var(--blue)}.badge.mc{background:#E3F0E6;color:var(--green-dark)}.badge.ma{background:var(--amber-pale);color:var(--amber)}.badge.ne{background:var(--gold-pale);color:var(--brown-dark)}
+.badge.tb-qc{background:var(--blue-pale);color:var(--blue)}.badge.tb-mc{background:#E3F0E6;color:var(--green-dark)}.badge.tb-ma{background:var(--amber-pale);color:var(--amber)}.badge.tb-ne{background:var(--gold-pale);color:var(--brown-dark)}
 /* session */
 .q-wrap{background:#fff;border:1.5px solid var(--cream-dark);border-radius:16px;padding:26px 30px;margin-bottom:16px}
 .q-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:12.5px;color:var(--text-medium)}
@@ -135,3 +135,9 @@ h3.sub{font-family:'Switzer','Space Grotesk',sans-serif;font-size:16px;color:var
 .q-ref .fig{margin:0 auto 10px;max-height:220px}
 .q-ref .choice.ro{cursor:default;padding:5px 10px;font-size:16px}.q-ref .choice.ro:hover{background:transparent}
 .q-ref .ne-box{display:inline-block;width:80px;height:30px;border:2px solid #333;border-radius:4px;background:#fff}
+.prow .stem{cursor:pointer}
+.prow .stem:hover{color:var(--green-dark);text-decoration:underline dotted}
+.prow .stem::before{content:'▸';display:inline-block;width:14px;color:var(--text-medium);transition:transform .15s}
+.prow .stem.open::before{transform:rotate(90deg)}
+.pfull{padding:4px 16px 14px 42px;border-top:1px dashed var(--cream-dark);background:#FCFBF8}
+.pfull .q-ref{margin-top:8px}

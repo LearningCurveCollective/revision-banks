@@ -71,7 +71,11 @@ function $(id){ return document.getElementById(id); }
 function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function ts(el){ if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(el?[el]:undefined).catch(function(){}); }
 function fmtD(t){ return new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
-function plain(s){ return (s||'').replace(/<[^>]+>/g,' ').replace(/\$[^$]*\$/g,function(m){ return m.slice(1,-1).replace(/\\[a-z]+/g,'').replace(/[{}]/g,''); }).replace(/\s+/g,' ').trim(); }
+function plain(s){
+    return (s||'').replace(/<[^>]+>/g,' ').replace(/\$\$?([^$]*)\$\$?/g,function(m,t){
+        return t.replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g,'($1)/($2)').replace(/\\left|\\right/g,'').replace(/\\le\b/g,'≤').replace(/\\ge\b/g,'≥').replace(/\\times/g,'×').replace(/\\cdot/g,'·').replace(/\\ldots/g,'…').replace(/\\sqrt/g,'√').replace(/\\[a-zA-Z]+/g,'').replace(/[{}]/g,'').replace(/\s+/g,' ');
+    }).replace(/\\\$/g,'$').replace(/\s+/g,' ').trim();
+}
 function stemPreview(p){ var s = p.type==='qc' && !p.stem ? 'QC: '+plain(p.qa)+' vs '+plain(p.qb) : plain(p.stem); return s.length>110 ? s.slice(0,110)+'…' : s; }
 function answerText(p, a){
     if(a==null) return '—';
@@ -202,6 +206,15 @@ function renderLog(){
 }
 
 /* ============================================================ BANK ============================================================ */
+function wireExpand(){
+    document.querySelectorAll('[data-expand]').forEach(function(el){ el.onclick=function(){
+        var p = byId[el.dataset.expand], row = el.closest('.prow'), box = row && row.nextElementSibling; if(!box || !box.classList.contains('pfull')) return;
+        var open = box.style.display!=='none';
+        if(open){ box.style.display='none'; el.classList.remove('open'); return; }
+        if(!box.dataset.loaded){ box.innerHTML = questionHTML(p) + '<div class="muted" style="font-size:12px;margin:6px 0 2px">'+(p.source?esc(p.source)+' · ':'')+'Answer is shown after you attempt it in a session.</div>'; box.dataset.loaded='1'; }
+        box.style.display='block'; el.classList.add('open'); ts(box);
+    }; });
+}
 var bankFilter = 'all', bankPick = {};
 function renderBank(){
     var h = '<h2 class="sec">Bank</h2><div class="toolbar">';
@@ -210,10 +223,11 @@ function renderBank(){
     TOPICS.forEach(function(t){
         var ps = PROBLEMS.filter(function(p){ return p.topic===t && passFilter(p); }); if(!ps.length) return;
         h += '<div class="topic"><div class="th"><span>'+esc(t)+'</span><span class="muted" style="font-weight:500">'+ps.length+' problem'+(ps.length===1?'':'s')+'</span></div>';
-        ps.forEach(function(p){ var a=S.att[p.id], la=lastAttempt(p.id); h += '<div class="prow"><input type="checkbox" data-pick="'+p.id+'"'+(bankPick[p.id]?' checked':'')+'><span class="stem"><span class="v'+(p.variant?'':' orig')+'">'+(p.variant?'v'+p.variant:'original')+'</span> &nbsp;'+esc(stemPreview(p))+'</span><span class="badge '+p.type+'">'+({qc:'QC',mc:'MC',ma:'Select all',ne:'Numeric'})[p.type]+'</span><span><span class="pip b'+(a?a.box:0)+'"></span> <span class="meta">'+boxName(a?a.box:0)+'</span></span><span class="meta">'+(la?('last '+fmtD(la.t)+(la.correct?' ✓':' ✗')+(la.conf==='sure'&&!la.correct?' (sure)':'')):'never tried')+'</span></div>'; });
+        ps.forEach(function(p){ var a=S.att[p.id], la=lastAttempt(p.id); h += '<div class="prow"><input type="checkbox" data-pick="'+p.id+'"'+(bankPick[p.id]?' checked':'')+'><span class="stem" data-expand="'+p.id+'" title="Click to show the full question"><span class="v'+(p.variant?'':' orig')+'">'+(p.variant?'v'+p.variant:'original')+'</span> &nbsp;'+esc(stemPreview(p))+'</span><span class="badge tb-'+p.type+'">'+({qc:'QC',mc:'MC',ma:'Select all',ne:'Numeric'})[p.type]+'</span><span><span class="pip b'+(a?a.box:0)+'"></span> <span class="meta">'+boxName(a?a.box:0)+'</span></span><span class="meta">'+(la?('last '+fmtD(la.t)+(la.correct?' ✓':' ✗')+(la.conf==='sure'&&!la.correct?' (sure)':'')):'never tried')+'</span></div><div class="pfull" style="display:none"></div>'; });
         h += '</div>';
     });
     $('v-bank').innerHTML = h;
+    wireExpand();
     document.querySelectorAll('[data-f]').forEach(function(b){ b.onclick=function(){ bankFilter=b.dataset.f; renderBank(); }; });
     document.querySelectorAll('[data-pick]').forEach(function(c){ c.onchange=function(){ if(c.checked) bankPick[c.dataset.pick]=1; else delete bankPick[c.dataset.pick]; var n=Object.keys(bankPick).length; $('bank-run').disabled=!n; $('bank-run').textContent='Run selected ('+n+')'; }; });
     var n=Object.keys(bankPick).length; $('bank-run').disabled=!n; $('bank-run').textContent='Run selected ('+n+')';
@@ -257,7 +271,7 @@ function renderQuestion(){
     var p = byId[sess.ids[sess.i]], learn = sess.mode==='learn';
     if(!sess.qStart) sess.qStart = now();
     var h = '<div class="progress"><div style="width:'+Math.round(sess.i/sess.ids.length*100)+'%"></div></div><div class="q-wrap">';
-    h += '<div class="q-top"><span>Question '+(sess.i+1)+' of '+sess.ids.length+(learn?' &middot; <b>'+esc(p.topic)+'</b>'+(p.variant?' (variant)':' (your original miss)'):'')+'</span><span class="badge '+p.type+'">'+({qc:'Quantitative Comparison',mc:'Select one',ma:'Select all that apply',ne:'Numeric entry'})[p.type]+'</span></div>';
+    h += '<div class="q-top"><span>Question '+(sess.i+1)+' of '+sess.ids.length+(learn?' &middot; <b>'+esc(p.topic)+'</b>'+(p.variant?' (variant)':' (your original miss)'):'')+'</span><span class="badge tb-'+p.type+'">'+({qc:'Quantitative Comparison',mc:'Select one',ma:'Select all that apply',ne:'Numeric entry'})[p.type]+'</span></div>';
     if(p.figure) h += p.figure;
     if(p.stem) h += '<div class="q-stem">'+p.stem+'</div>';
     var a = sess.answers[p.id];
@@ -340,10 +354,11 @@ function renderPTest(){
     TOPICS.forEach(function(t){
         var ps = PROBLEMS.filter(function(p){ return p.topic===t; });
         h += '<div class="topic"><div class="th"><span>'+esc(t)+'</span><span><label style="font-weight:500;font-size:12.5px;cursor:pointer"><input type="checkbox" data-pt-topic="'+esc(t)+'"'+(ps.every(function(p){return ptPick[p.id];})?' checked':'')+'> whole topic</label></span></div>';
-        ps.forEach(function(p){ var a=S.att[p.id]; h += '<div class="prow" style="grid-template-columns:auto 1fr auto auto"><input type="checkbox" data-pt-pick="'+p.id+'"'+(ptPick[p.id]?' checked':'')+'><span class="stem"><span class="v'+(p.variant?'':' orig')+'">'+(p.variant?'variation '+p.variant:'original')+'</span> &nbsp;'+esc(stemPreview(p))+'</span><span class="badge '+p.type+'">'+({qc:'QC',mc:'MC',ma:'Select all',ne:'Numeric'})[p.type]+'</span><span><span class="pip b'+(a?a.box:0)+'"></span> <span class="meta">'+boxName(a?a.box:0)+'</span></span></div>'; });
+        ps.forEach(function(p){ var a=S.att[p.id]; h += '<div class="prow" style="grid-template-columns:auto 1fr auto auto"><input type="checkbox" data-pt-pick="'+p.id+'"'+(ptPick[p.id]?' checked':'')+'><span class="stem" data-expand="'+p.id+'" title="Click to show the full question"><span class="v'+(p.variant?'':' orig')+'">'+(p.variant?'variation '+p.variant:'original')+'</span> &nbsp;'+esc(stemPreview(p))+'</span><span class="badge tb-'+p.type+'">'+({qc:'QC',mc:'MC',ma:'Select all',ne:'Numeric'})[p.type]+'</span><span><span class="pip b'+(a?a.box:0)+'"></span> <span class="meta">'+boxName(a?a.box:0)+'</span></span></div><div class="pfull" style="display:none"></div>'; });
         h += '</div>';
     });
     $('v-ptest').innerHTML = h;
+    wireExpand();
     document.querySelectorAll('[data-pt]').forEach(function(b){ b.onclick=function(){ var f=b.dataset.pt; ptPick={}; if(f!=='none') PROBLEMS.forEach(function(p){ if(f==='all'||(f==='orig'&&p.variant===0)||(f==='var'&&p.variant>0)) ptPick[p.id]=1; }); renderPTest(); }; });
     document.querySelectorAll('[data-pt-topic]').forEach(function(c){ c.onchange=function(){ PROBLEMS.filter(function(p){ return p.topic===c.dataset.ptTopic; }).forEach(function(p){ if(c.checked) ptPick[p.id]=1; else delete ptPick[p.id]; }); renderPTest(); }; });
     document.querySelectorAll('[data-pt-pick]').forEach(function(c){ c.onchange=function(){ if(c.checked) ptPick[c.dataset.ptPick]=1; else delete ptPick[c.dataset.ptPick]; renderPTest(); }; });
