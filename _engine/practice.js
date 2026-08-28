@@ -76,7 +76,7 @@ function plain(s){
         return t.replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g,'($1)/($2)').replace(/\\left|\\right/g,'').replace(/\\le\b/g,'≤').replace(/\\ge\b/g,'≥').replace(/\\times/g,'×').replace(/\\cdot/g,'·').replace(/\\ldots/g,'…').replace(/\\sqrt/g,'√').replace(/\\[a-zA-Z]+/g,'').replace(/[{}]/g,'').replace(/\s+/g,' ');
     }).replace(/\\\$/g,'$').replace(/\s+/g,' ').trim();
 }
-function stemPreview(p){ var s = p.type==='qc' && !p.stem ? 'QC: '+plain(p.qa)+' vs '+plain(p.qb) : plain(p.stem); return s.length>110 ? s.slice(0,110)+'…' : s; }
+function stemPreview(p){ var s = p.preview ? p.preview : (p.type==='qc' && (!p.stem || /<table/.test(p.stem)) ? 'QC: '+plain(p.qa)+' vs '+plain(p.qb) : plain(p.stem)); return s.length>110 ? s.slice(0,110)+'…' : s; }
 function answerText(p, a){
     if(a==null) return '—';
     if(p.type==='qc') return ['A','B','C','D'][a];
@@ -166,7 +166,7 @@ function questionHTML(p){
     if(p.stem) h += '<div class="q-stem" style="font-size:16px">'+p.stem+'</div>';
     if(p.type==='qc'){ h += '<div class="qc" style="font-size:16px"><div><div class="h">Quantity A</div>'+p.qa+'</div><div><div class="h">Quantity B</div>'+p.qb+'</div></div>'; QC.forEach(function(c){ h += '<div class="choice ro"><span class="dot"></span><span>'+c+'</span></div>'; }); }
     else if(p.type==='mc'||p.type==='ma'){ p.choices.forEach(function(c){ h += '<div class="choice ro'+(p.type==='ma'?' box':'')+'"><span class="dot"></span><span>'+c+'</span></div>'; }); }
-    else { h += '<div class="ne-row">'+(p.frac?'<span>$\\dfrac{x}{w}$ =</span><span class="frac"><span class="ne-box"></span><span class="ne-box" style="border-top:3px solid #000"></span></span>':'<span class="ne-box" style="width:140px"></span>')+'</div>'; }
+    else { h += '<div class="ne-row">'+(p.frac?'<span>'+(p.fracLabel||'$\\dfrac{x}{w}$')+' =</span><span class="frac"><span class="ne-box"></span><span class="ne-box" style="border-top:3px solid #000"></span></span>':'<span class="ne-box" style="width:140px"></span>')+'</div>'; }
     return h+'</div>';
 }
 var logPrefill = null;
@@ -278,7 +278,7 @@ function renderQuestion(){
     if(p.type==='qc'){ h += '<div class="qc"><div><div class="h">Quantity A</div>'+p.qa+'</div><div><div class="h">Quantity B</div>'+p.qb+'</div></div>'; QC.forEach(function(c,i){ h += '<div class="choice'+(a===i?' sel':'')+'" data-c="'+i+'"><span class="dot"></span><span>'+c+'</span></div>'; }); }
     else if(p.type==='mc'){ p.choices.forEach(function(c,i){ h += '<div class="choice'+(a===i?' sel':'')+'" data-c="'+i+'"><span class="dot"></span><span>'+c+'</span></div>'; }); }
     else if(p.type==='ma'){ p.choices.forEach(function(c,i){ h += '<div class="choice box'+((a||[]).indexOf(i)!==-1?' sel':'')+'" data-c="'+i+'"><span class="dot"></span><span>'+c+'</span></div>'; }); }
-    else { if(p.frac){ var parts=(a||'/').split('/'); h += '<div class="ne-row"><span>$\\dfrac{x}{w}$ =</span><span class="frac"><input id="ne-n" value="'+esc(parts[0]||'')+'" inputmode="numeric"><input id="ne-d" value="'+esc(parts[1]||'')+'" inputmode="numeric"></span></div>'; } else h += '<div class="ne-row"><input id="ne-v" value="'+esc(a||'')+'" inputmode="decimal" style="width:140px"></div>'; }
+    else { if(p.frac){ var parts=(a||'/').split('/'); h += '<div class="ne-row"><span>'+(p.fracLabel||'$\\dfrac{x}{w}$')+' =</span><span class="frac"><input id="ne-n" value="'+esc(parts[0]||'')+'" inputmode="numeric"><input id="ne-d" value="'+esc(parts[1]||'')+'" inputmode="numeric"></span></div>'; } else h += '<div class="ne-row"><input id="ne-v" value="'+esc(a||'')+'" inputmode="decimal" style="width:140px"></div>'; }
     h += '<div class="conf"><span class="lab">How sure are you?</span>'+Object.keys(CONF).map(function(k){ return '<button data-conf="'+k+'"'+(sess.conf[p.id]===k?' class="on"':'')+'>'+CONF[k]+'</button>'; }).join('')+'</div>';
     if(learn && !sess.revealed) h += '<div class="gate"><b>Quick one before the reveal:</b> why that answer?<textarea id="gate-txt" placeholder="A sentence is plenty. What was the reasoning?">'+esc(sess.explain[p.id]||'')+'</textarea></div>';
     if(learn && sess.revealed){ var ok = isCorrect(p,a); h += '<div class="reveal"><div class="tag">'+(ok?'&#10003; Got it':'&#10007; Not this time')+' &middot; answer: '+answerText(p, p.answer)+(p.type==='ne'?'':'')+'</div><div>'+p.explain+'</div>'
